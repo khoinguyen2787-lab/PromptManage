@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>✨ Prompt Manager Pro</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            primary: { 50: '#eef2ff', 100: '#e0e7ff', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },
+            dark: { 800: '#1e293b', 900: '#0f172a' }
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.3s ease-out',
+            'slide-up': 'slideUp 0.4s ease-out',
+            'pulse-soft': 'pulseSoft 2s infinite'
+          },
+          keyframes: {
+            fadeIn: { '0%': { opacity: 0 }, '100%': { opacity: 1 } },
+            slideUp: { '0%': { opacity: 0, transform: 'translateY(20px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+            pulseSoft: { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.8 } }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 30%, #f093fb 100%);
+      background-attachment: fixed;
+      min-height: 100vh;
+    }
+    
+    .dark body {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+    }
+    
+    .glass {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .dark .glass {
+      background: rgba(30, 41, 59, 0.95);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .card {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 16px;
+    }
+    
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.3);
+    }
+    
+    .dark .card:hover {
+      box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.2);
+    }
+    
+    .btn {
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 500;
+    }
+    
+    .btn:active { transform: scale(0.98); }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+    .btn-primary:hover {
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+      transform: translateY(-1px);
+    }
+    
+    .btn-ghost {
+      background: transparent;
+      color: #64748b;
+    }
+    .btn-ghost:hover {
+      background: #f1f5f9;
+      color: #475569;
+    }
+    .dark .btn-ghost:hover {
+      background: #334155;
+      color: #e2e8f0;
+    }
+    
+    .input-field {
+      transition: all 0.2s ease;
+      border: 2px solid #e2e8f0;
+      background: white;
+    }
+    .dark .input-field {
+      border-color: #475569;
+      background: #1e293b;
+      color: #f1f5f9;
+    }
+    .input-field:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+      outline: none;
+    }
+    
+    .mic-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      background: #f1f5f9;
+      color: #64748b;
+    }
+    .mic-btn:hover {
+      background: #6366f1;
+      color: white;
+      transform: scale(1.1);
+    }
+    .mic-btn.recording {
+      background: #ef4444;
+      color: white;
+      animation: pulse-soft;
+    }
+    
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+      color: #4338ca;
+    }
+    .dark .tag {
+      background: linear-gradient(135deg, #3730a3, #4338ca);
+      color: #e0e7ff;
+    }
+    
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.active { display: flex; }
+    
+    .modal-content {
+      background: white;
+      border-radius: 20px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      animation: slideUp 0.3s ease;
+    }
+    .dark .modal-content {
+      background: #1e293b;
+    }
+    
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      padding: 1rem 1.5rem;
+      border-radius: 12px;
+      color: white;
+      font-weight: 500;
+      z-index: 200;
+      animation: slideUp 0.3s ease;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      max-width: 400px;
+    }
+    .toast.success { background: linear-gradient(135deg, #10b981, #059669); }
+    .toast.error { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .toast.info { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+    
+    .category-badge {
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+    }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { 
+      background: #cbd5e1; 
+      border-radius: 3px; 
+    }
+    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    /* Floating animation for header */
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    .floating { animation: float 3s ease-in-out infinite; }
+    
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body class="min-h-screen p-4 md:p-6 transition-colors duration-300">
+  
+  <!-- Background decoration -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-300/30 dark:bg-purple-900/20 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-300/30 dark:bg-indigo-900/20 rounded-full blur-3xl"></div>
+  </div>
+
+  <div class="relative max-w-6xl mx-auto">
+    
+    <!-- Header -->
+    <header class="glass rounded-3xl p-5 mb-6 shadow-xl">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-xl floating">
+            <i class="fas fa-bolt"></i>
+          </div>
+          <div>
+            <h1 class="text-xl md:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Prompt Manager Pro
+            </h1>
+            <p class="text-sm text-gray-500 dark:text-gray-400">Quản lý thông minh • Nhập liệu bằng giọng nói</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <div id="stats" class="hidden sm:flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-4 py-2 rounded-xl">
+            <span><i class="fas fa-layer-group mr-1"></i><b id="statCount">0</b> prompt</span>
+            <span class="text-gray-300 dark:text-gray-600">|</span>
+            <span><i class="fas fa-folder mr-1"></i><b id="statCats">0</b> danh mục</span>
+          </div>
+          
+          <button onclick="toggleDarkMode()" 
+            class="w-11 h-11 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
+            title="Chế độ tối/sáng">
+            <i class="fas fa-moon dark:hidden"></i>
+            <i class="fas fa-sun hidden dark:inline text-yellow-400"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Card -->
+    <main class="glass rounded-3xl p-5 md:p-6 shadow-xl">
+      
+      <!-- Form Section -->
+      <section class="mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
+        <div class="flex items-center gap-2 mb-4">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white">
+            <i class="fas fa-plus text-sm"></i>
+          </div>
+          <h2 class="text-lg font-semibold text-gray-800 dark:text-white" id="formTitle">Thêm Prompt Mới</h2>
+        </div>
+        
+        <form id="promptForm" onsubmit="handleSubmit(event)" class="space-y-4">
+          <!-- Row 1: Title + Content -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="relative group">
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 ml-1">
+                <i class="fas fa-heading mr-1"></i>Tiêu đề *
+              </label>
+              <div class="relative">
+                <input id="title" type="text" required
+                  placeholder="Ví dụ: Viết bài SEO về AI..."
+                  class="input-field w-full rounded-xl py-3 pl-11 pr-12 text-sm" />
+                <i class="fas fa-heading absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <button type="button" id="mic-title" 
+                  class="mic-btn absolute right-2 top-1/2 -translate-y-1/2" 
+                  title="Nhập bằng giọng nói">
+                  <i class="fas fa-microphone text-sm"></i>
+                </button>
+              </div>
+            </div>
+            
+            <div class="relative group">
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 ml-1">
+                <i class="fas fa-file-alt mr-1"></i>Nội dung / URL *
+              </label>
+              <div class="relative">
+                <input id="content" type="text" required
+                  placeholder="Nhập nội dung hoặc dán URL..."
+                  class="input-field w-full rounded-xl py-3 pl-11 pr-12 text-sm" />
+                <i class="fas fa-pen absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <button type="button" id="mic-content" 
+                  class="mic-btn absolute right-2 top-1/2 -translate-y-1/2"
+                  title="Nhập bằng giọng nói">
+                  <i class="fas fa-microphone text-sm"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Row 2: Category + Tags -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="relative">
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 ml-1">
+                <i class="fas fa-folder mr-1"></i>Danh mục *
+              </label>
+              <div class="relative">
+                <input id="category" type="text" required list="categoryList"
+                  placeholder="VD: Marketing, Code, AI..."
+                  class="input-field w-full rounded-xl py-3 pl-11 pr-12 text-sm" />
+                <i class="fas fa-tags absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                <button type="button" id="mic-category" 
+                  class="mic-btn absolute right-2 top-1/2 -translate-y-1/2"
+                  title="Nhập bằng giọng nói">
+                  <i class="fas fa-microphone text-sm"></i>
+                </button>
+                <datalist id="categoryList"></datalist>
+              </div>
+            </div>
+            
+            <div class="relative">
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 ml-1">
+                <i class="fas fa-bookmark mr-1"></i>Tags (tuỳ chọn)
+              </label>
+              <div class="relative">
+                <input id="tags" type="text"
+                  placeholder="tag1, tag2, tag3..."
+                  class="input-field w-full rounded-xl py-3 pl-11 text-sm" />
+                <i class="fas fa-hashtag absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Action Buttons -->
+          <div class="flex flex-wrap gap-3 pt-2">
+            <button type="submit" id="submitBtn" class="btn btn-primary px-6 py-2.5 rounded-xl shadow-lg">
+              <i class="fas fa-plus"></i>
+              <span id="btnText">Thêm Prompt</span>
+            </button>
+            
+            <button type="button" id="cancelBtn" onclick="cancelEdit()" 
+              class="hidden btn px-5 py-2.5 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600">
+              <i class="fas fa-times"></i> Hủy
+            </button>
+            
+            <div class="flex-1"></div>
+            
+            <button type="button" onclick="exportData()" 
+              class="btn px-4 py-2.5 rounded-xl bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/60">
+              <i class="fas fa-download"></i> <span class="hidden sm:inline">Export</span>
+            </button>
+            
+            <label class="btn px-4 py-2.5 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/60 cursor-pointer">
+              <i class="fas fa-upload"></i> <span class="hidden sm:inline">Import</span>
+              <input type="file" id="importFile" class="hidden" accept=".json" onchange="importData(event)" />
+            </label>
+          </div>
+        </form>
+      </section>
+
+      <!-- Filters & Search -->
+      <section class="mb-5">
+        <div class="flex flex-wrap gap-3 items-center">
+          <!-- Search -->
+          <div class="relative flex-1 min-w-[200px]">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+            <input id="searchInput" type="text" oninput="handleSearch()"
+              placeholder="🔍 Tìm kiếm prompt..."
+              class="input-field w-full rounded-xl py-2.5 pl-11 pr-4 text-sm" />
+          </div>
+          
+          <!-- View Mode -->
+          <select id="viewMode" onchange="renderPrompts()" 
+            class="input-field rounded-xl py-2.5 px-4 text-sm cursor-pointer">
+            <option value="list">📋 Danh sách</option>
+            <option value="grid" selected>⊞ Lưới</option>
+            <option value="grouped">📁 Theo nhóm</option>
+          </select>
+          
+          <!-- Sort -->
+          <select id="sortBy" onchange="renderPrompts()" 
+            class="input-field rounded-xl py-2.5 px-4 text-sm cursor-pointer">
+            <option value="newest">🕐 Mới nhất</option>
+            <option value="oldest">🕑 Cũ nhất</option>
+            <option value="az">🔤 A → Z</option>
+            <option value="usage">📊 Phổ biến</option>
+          </select>
+          
+          <!-- Category Filter (shown in grouped mode) -->
+          <select id="categoryFilter" onchange="renderPrompts()" 
+            class="input-field rounded-xl py-2.5 px-4 text-sm cursor-pointer hidden">
+            <option value="all">🗂️ Tất cả</option>
+          </select>
+        </div>
+      </section>
+
+      <!-- Bulk Actions Bar -->
+      <div id="bulkBar" class="hidden mb-4 p-3 rounded-xl bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/30 dark:to-orange-900/30 border border-yellow-200 dark:border-yellow-800">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="font-medium text-yellow-800 dark:text-yellow-200">
+            <i class="fas fa-check-circle mr-1"></i>
+            <b id="selectedNum">0</b> đã chọn
+          </span>
+          <button onclick="bulkCopy()" class="px-3 py-1.5 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm transition">
+            <i class="fas fa-copy mr-1"></i> Copy
+          </button>
+          <button onclick="bulkDelete()" class="px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-sm transition">
+            <i class="fas fa-trash mr-1"></i> Delete
+          </button>
+          <button onclick="clearSelection()" class="px-3 py-1.5 rounded-lg bg-gray-400 hover:bg-gray-500 text-white text-sm transition">
+            <i class="fas fa-times mr-1"></i> Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- Voice Status -->
+      <div id="voiceStatus" class="text-center text-sm text-gray-500 dark:text-gray-400 min-h-[1.5rem] mb-3"></div>
+
+      <!-- Prompt List -->
+      <div id="promptContainer" class="min-h-[300px]"></div>
+      
+      <!-- Empty State -->
+      <div id="emptyState" class="empty-state hidden">
+        <div class="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/40 dark:to-purple-900/40 flex items-center justify-center">
+          <i class="fas fa-inbox text-3xl text-indigo-400"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">Chưa có prompt nào</h3>
+        <p class="text-gray-500 dark:text-gray-400 text-sm">Hãy thêm prompt đầu tiên của bạn ở trên! ✨</p>
+      </div>
+      
+      <!-- Pagination -->
+      <div id="pagination" class="flex justify-center gap-2 mt-6 flex-wrap"></div>
+    </main>
+
+    <!-- Advanced Settings -->
+    <details class="glass rounded-2xl p-4 mt-4 shadow-lg">
+      <summary class="cursor-pointer font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+        <i class="fas fa-cog"></i> Quản lý nâng cao
+      </summary>
+      <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
+        <div class="flex flex-wrap gap-3">
+          <input id="deleteCatInput" type="text" placeholder="Nhập tên danh mục cần xoá..." 
+            class="input-field rounded-xl py-2 px-4 text-sm flex-1 min-w-[200px]" />
+          <button onclick="deleteCategory()" class="btn px-4 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white">
+            <i class="fas fa-trash-alt"></i> Xoá danh mục
+          </button>
+          <button onclick="clearAll()" class="btn px-4 py-2 rounded-xl bg-gray-500 hover:bg-gray-600 text-white">
+            <i class="fas fa-eraser"></i> Xoá tất cả
+          </button>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          <i class="fas fa-info-circle mr-1"></i>
+          Lưu ý: Các thao tác xoá không thể hoàn tác. Hãy export dữ liệu trước khi xoá!
+        </p>
+      </div>
+    </details>
+
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer"></div>
+
+  <!-- Preview Modal -->
+  <div id="previewModal" class="modal-overlay" onclick="handleModalClose(event)">
+    <div class="modal-content glass rounded-3xl shadow-2xl">
+      <div class="p-5 border-b border-gray-200 dark:border-gray-700 flex justify-between items-start">
+        <div>
+          <h3 id="previewTitle" class="text-xl font-bold text-gray-800 dark:text-white"></h3>
+          <div id="previewMeta" class="flex items-center gap-2 mt-2"></div>
+        </div>
+        <button onclick="closeModal()" class="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="p-5 space-y-4">
+        <div id="previewTags" class="flex flex-wrap gap-2"></div>
+        
+        <div class="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4">
+          <p id="previewContent" class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap text-sm leading-relaxed"></p>
+        </div>
+        
+        <div id="previewUrl" class="hidden">
+          <a href="#" target="_blank" class="inline-flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:underline text-sm">
+            <i class="fas fa-external-link-alt"></i> <span id="previewUrlText"></span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="p-5 pt-0 flex gap-3">
+        <button onclick="copyFromPreview()" class="flex-1 btn btn-primary py-3 rounded-xl justify-center">
+          <i class="fas fa-copy"></i> Sao chép nội dung
+        </button>
+        <button onclick="closeModal()" class="px-6 py-3 rounded-xl bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============ STATE ============
+    let prompts = JSON.parse(localStorage.getItem('prompts_pro_v3')) || [];
+    let editingId = null;
+    let selectedIds = new Set();
+    let previewData = null;
+    
+    // Pagination
+    const ITEMS_PER_PAGE = 8;
+    let currentPage = 1;
+    let filteredList = [];
+    
+    // Speech Recognition
+    let recognition = null;
+    let isRecording = false;
+    let activeMic = null;
+    
+    // Debounce
+    let searchTimer = null;
+    
+    // ============ INIT ============
+    document.addEventListener('DOMContentLoaded', () => {
+      initDarkMode();
+      initSpeechRecognition();
+      initEventListeners();
+      renderAll();
+    });
+    
+    function initEventListeners() {
+      // Mic buttons
+      document.getElementById('mic-title').onclick = () => startMic('title');
+      document.getElementById('mic-content').onclick = () => startMic('content');
+      document.getElementById('mic-category').onclick = () => startMic('category');
+      
+      // Close modal on Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeModal();
+          clearSelection();
+        }
+        if (e.ctrlKey && e.key === 'k') {
+          e.preventDefault();
+          document.getElementById('searchInput').focus();
+        }
+      });
+    }
+    
+    // ============ DARK MODE ============
+    function initDarkMode() {
+      const saved = localStorage.getItem('darkMode');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      
+      if (saved === 'true' || (!saved && prefersDark)) {
+        document.documentElement.classList.add('dark');
+      }
+    }
+    
+    function toggleDarkMode() {
+      document.documentElement.classList.toggle('dark');
+      localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+      toast('Đã cập nhật giao diện', 'info');
+    }
+    
+    // ============ TOAST ============
+    function toast(message, type = 'success', duration = 3000) {
+      const container = document.getElementById('toastContainer');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation' : 'info'}-circle"></i>
+        <span>${message}</span>
+      `;
+      container.appendChild(el);
+      
+      setTimeout(() => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(10px)';
+        setTimeout(() => el.remove(), 300);
+      }, duration);
+    }
+    
+    // ============ SPEECH RECOGNITION ============
+    function initSpeechRecognition() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        document.querySelectorAll('.mic-btn').forEach(btn => {
+          btn.title = 'Không hỗ trợ';
+          btn.style.opacity = '0.5';
+          btn.onclick = () => toast('Trình duyệt không hỗ trợ giọng nói', 'error');
+        });
+        return;
+      }
+      
+      recognition = new SR();
+      recognition.lang = 'vi-VN';
+      recognition.continuous = false;
+      
+      recognition.onstart = () => {
+        isRecording = true;
+        activeMic?.classList.add('recording');
+        document.getElementById('voiceStatus').innerHTML = 
+          '<i class="fas fa-microphone animate-pulse mr-1"></i>Đang nghe...';
+      };
+      
+      recognition.onend = () => {
+        isRecording = false;
+        activeMic?.classList.remove('recording');
+        const status = document.getElementById('voiceStatus');
+        if (status.textContent.includes('Đang nghe')) status.textContent = '';
+      };
+      
+      recognition.onerror = (e) => {
+        isRecording = false;
+        activeMic?.classList.remove('recording');
+        const errors = {
+          'not-allowed': 'Vui lòng cấp quyền microphone',
+          'no-speech': 'Không nghe thấy giọng nói',
+          'audio-capture': 'Không tìm thấy microphone'
+        };
+        toast(errors[e.error] || 'Lỗi nhận diện', 'error');
+        document.getElementById('voiceStatus').textContent = '';
+      };
+      
+      recognition.onresult = (e) => {
+        const text = e.results[0][0].transcript.trim();
+        const field = activeMic?.id.replace('mic-', '');
+        
+        if (field && document.getElementById(field)) {
+          document.getElementById(field).value = text;
+          if (field === 'content') detectUrl();
+          if (field === 'category') updateCategoryList();
+          toast(`✓ "${text}"`, 'success', 2000);
+        }
+      };
+    }
+    
+    function startMic(field) {
+      if (!recognition) return;
+      if (isRecording) { recognition.stop(); return; }
+      
+      navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(() => {
+          activeMic = document.getElementById(`mic-${field}`);
+          recognition.start();
+        })
+        .catch(() => toast('Cần cấp quyền microphone', 'error'));
+    }
+    
+    function detectUrl() {
+      const val = document.getElementById('content').value.trim();
+      if (/^https?:\/\//i.test(val)) {
+        toast('🔗 Đã nhận diện URL', 'info', 2000);
+      }
+    }
+    
+    // ============ CORE FUNCTIONS ============
+    function uid() {
+      return 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+    
+    function save() {
+      localStorage.setItem('prompts_pro_v3', JSON.stringify(prompts));
+    }
+    
+    function renderAll() {
+      updateStats();
+      updateCategoryList();
+      handleSearch(); // This calls renderPrompts internally
+    }
+    
+    function getFilteredList() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      const catFilter = document.getElementById('categoryFilter').value;
+      const sortBy = document.getElementById('sortBy').value;
+      const viewMode = document.getElementById('viewMode').value;
+      
+      // Show/hide category filter
+      const catSelect = document.getElementById('categoryFilter');
+      if (viewMode === 'grouped') {
+        catSelect.classList.remove('hidden');
+      } else {
+        catSelect.classList.add('hidden');
+        catSelect.value = 'all';
+      }
+      
+      let list = prompts.filter(p => {
+        const matchQuery = !query || 
+          p.title.toLowerCase().includes(query) ||
+          p.content.toLowerCase().includes(query) ||
+          p.category?.toLowerCase().includes(query) ||
+          p.tags?.some(t => t.toLowerCase().includes(query));
+        
+        const matchCat = catFilter === 'all' || p.category === catFilter;
+        return matchQuery && matchCat;
+      });
+      
+      // Sort
+      list.sort((a, b) => {
+        switch(sortBy) {
+          case 'oldest': return (a.createdAt || 0) - (b.createdAt || 0);
+          case 'az': return (a.title || '').localeCompare(b.title || '', 'vi');
+          case 'usage': return (b.usageCount || 0) - (a.usageCount || 0);
+          default: return (b.createdAt || 0) - (a.createdAt || 0);
+        }
+      });
+      
+      return list;
+    }
+    
+    function handleSearch() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => {
+        currentPage = 1;
+        filteredList = getFilteredList();
+        renderPrompts();
+      }, 250);
+    }
+    
+    function renderPrompts() {
+      const container = document.getElementById('promptContainer');
+      const empty = document.getElementById('emptyState');
+      const viewMode = document.getElementById('viewMode').value;
+      
+      if (filteredList.length === 0) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        renderPagination(0);
+        return;
+      }
+      empty.classList.add('hidden');
+      
+      // Update category filter options
+      if (viewMode === 'grouped') {
+        updateCategoryFilter();
+      }
+      
+      // Render based on view mode
+      switch(viewMode) {
+        case 'grid': renderGrid(container); break;
+        case 'grouped': renderGrouped(container); break;
+        default: renderList(container);
+      }
+      
+      renderPagination(Math.ceil(
+        viewMode === 'grouped' 
+          ? Object.keys(groupByCategory(filteredList)).length 
+          : filteredList.length
+        / ITEMS_PER_PAGE
+      ));
+    }
+    
+    function groupByCategory(list) {
+      const groups = {};
+      list.forEach(p => {
+        const cat = p.category || 'Khác';
+        if (!groups[cat]) groups[cat] = [];
+        groups[cat].push(p);
+      });
+      return groups;
+    }
+    
+    function renderList(container) {
+      container.className = 'space-y-3';
+      container.innerHTML = '';
+      
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const page = filteredList.slice(start, start + ITEMS_PER_PAGE);
+      
+      page.forEach(p => container.appendChild(createCard(p, false)));
+    }
+    
+    function renderGrid(container) {
+      container.className = 'grid grid-cols-1 md:grid-cols-2 gap-4';
+      container.innerHTML = '';
+      
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const page = filteredList.slice(start, start + ITEMS_PER_PAGE);
+      
+      page.forEach(p => container.appendChild(createCard(p, true)));
+    }
+    
+    function renderGrouped(container) {
+      container.className = 'space-y-6';
+      container.innerHTML = '';
+      
+      const groups = groupByCategory(filteredList);
+      const cats = Object.keys(groups).sort((a,b) => a.localeCompare(b, 'vi'));
+      const start = (currentPage - 1) * ITEMS_PER_PAGE;
+      const visible = cats.slice(start, start + ITEMS_PER_PAGE);
+      
+      visible.forEach(cat => {
+        const section = document.createElement('div');
+        section.className = 'animate-fade-in';
+        section.innerHTML = `
+          <h3 class="text-lg font-semibold text-indigo-600 dark:text-indigo-400 mb-3 flex items-center gap-2">
+            <i class="fas fa-folder"></i>
+            ${escapeHtml(cat)}
+            <span class="tag">${groups[cat].length}</span>
+          </h3>
+        `;
+        
+        groups[cat].forEach(p => {
+          section.appendChild(createCard(p, false));
+        });
+        
+        container.appendChild(section);
+      });
+    }
+    
+    function createCard(p, isGrid) {
+      const div = document.createElement('div');
+      div.className = `card glass p-4 ${isGrid ? '' : 'border-l-4 border-l-indigo-500'}`;
+      div.dataset.id = p.id;
+      
+      const isSelected = selectedIds.has(p.id);
+      const isUrl = p.url || /^https?:\/\//i.test(p.content);
+      const displayContent = isUrl 
+        ? `<a href="${escapeHtml(p.url || p.content)}" target="_blank" class="text-indigo-600 dark:text-indigo-400 hover:underline text-sm flex items-center gap-1">
+            <i class="fas fa-link"></i> ${truncate(p.url || p.content, 40)}
+          </a>`
+        : `<p class="text-gray-600 dark:text-gray-400 text-sm line-clamp-2">${escapeHtml(p.content)}</p>`;
+      
+      div.innerHTML = `
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-2">
+              <h4 class="font-semibold text-gray-800 dark:text-white truncate">${escapeHtml(p.title)}</h4>
+              <span class="category-badge bg-indigo-100 text-indigo-700 dark:bg-indigo-900/50 dark:text-indigo-300">
+                ${escapeHtml(p.category)}
+              </span>
+            </div>
+            
+            ${displayContent}
+            
+            ${p.tags?.length ? `
+              <div class="flex flex-wrap gap-1.5 mt-3">
+                ${p.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}
+              </div>
+            ` : ''}
+            
+            <div class="flex items-center gap-4 mt-3 pt-3 border-t border-gray-100 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
+              ${p.usageCount ? `<span><i class="fas fa-chart-line mr-1"></i>${p.usageCount}</span>` : ''}
+              ${p.createdAt ? `<span><i class="fas fa-clock mr-1"></i>${formatDate(p.createdAt)}</span>` : ''}
+            </div>
+          </div>
+          
+          <div class="flex flex-col items-end gap-2">
+            <label class="cursor-pointer">
+              <input type="checkbox" data-id="${p.id}" ${isSelected ? 'checked' : ''}
+                onchange="toggleSelect('${p.id}')"
+                class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" />
+            </label>
+            
+            <div class="flex gap-1">
+              <button onclick="preview('${p.id}')" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition" title="Xem">
+                <i class="fas fa-eye text-sm"></i>
+              </button>
+              <button onclick="copyPrompt('${p.id}')" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 transition" title="Copy">
+                <i class="fas fa-copy text-sm"></i>
+              </button>
+              <button onclick="startEdit('${p.id}')" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-yellow-600 hover:bg-yellow-50 dark:hover:bg-yellow-900/30 transition" title="Edit">
+                <i class="fas fa-edit text-sm"></i>
+              </button>
+              <button onclick="deletePrompt('${p.id}')" class="w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition" title="Delete">
+                <i class="fas fa-trash text-sm"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      return div;
+    }
+    
+    // ============ FORM HANDLING ============
+    function handleSubmit(e) {
+      e.preventDefault();
+      
+      const title = document.getElementById('title').value.trim();
+      const content = document.getElementById('content').value.trim();
+      const category = document.getElementById('category').value.trim();
+      const tags = document.getElementById('tags').value.split(',').map(t => t.trim()).filter(Boolean);
+      
+      if (!title || !content || !category) {
+        toast('Vui lòng điền đầy đủ thông tin *', 'error');
+        return;
+      }
+      
+      const url = /^https?:\/\//i.test(content) ? content : null;
+      
+      const data = {
+        id: editingId || uid(),
+        title,
+        content,
+        category,
+        tags,
+        url,
+        createdAt: editingId ? prompts.find(p => p.id === editingId)?.createdAt : Date.now(),
+        updatedAt: Date.now(),
+        usageCount: editingId ? prompts.find(p => p.id === editingId)?.usageCount || 0 : 0
+      };
+      
+      if (editingId) {
+        const idx = prompts.findIndex(p => p.id === editingId);
+        if (idx >= 0) prompts[idx] = data;
+        toast('✓ Đã cập nhật prompt', 'success');
+        cancelEdit();
+      } else {
+        prompts.push(data);
+        toast('✓ Đã thêm prompt mới', 'success');
+        e.target.reset();
+      }
+      
+      save();
+      renderAll();
+    }
+    
+    function startEdit(id) {
+      const p = prompts.find(x => x.id === id);
+      if (!p) return;
+      
+      editingId = id;
+      document.getElementById('title').value = p.title;
+      document.getElementById('content').value = p.url || p.content;
+      document.getElementById('category').value = p.category;
+      document.getElementById('tags').value = p.tags?.join(', ') || '';
+      
+      document.getElementById('formTitle').innerHTML = '<i class="fas fa-edit mr-1"></i>Chỉnh sửa Prompt';
+      document.getElementById('btnText').textContent = 'Cập nhật';
+      document.getElementById('cancelBtn').classList.remove('hidden');
+      document.getElementById('submitBtn').scrollIntoView({ behavior: 'smooth' });
+      
+      toast('Đang chỉnh sửa...', 'info', 2000);
+    }
+    
+    function cancelEdit() {
+      editingId = null;
+      document.getElementById('promptForm').reset();
+      document.getElementById('formTitle').innerHTML = '<i class="fas fa-plus mr-1"></i>Thêm Prompt Mới';
+      document.getElementById('btnText').textContent = 'Thêm Prompt';
+      document.getElementById('cancelBtn').classList.add('hidden');
+    }
+    
+    function deletePrompt(id) {
+      if (!confirm('Xoá prompt này?')) return;
+      
+      const p = prompts.find(x => x.id === id);
+      prompts = prompts.filter(x => x.id !== id);
+      
+      save();
+      renderAll();
+      toast(`✓ Đã xoá "${p?.title}"`, 'success');
+    }
+    
+    function copyPrompt(id) {
+      const p = prompts.find(x => x.id === id);
+      if (!p) return;
+      
+      navigator.clipboard.writeText(p.content).then(() => {
+        p.usageCount = (p.usageCount || 0) + 1;
+        save();
+        renderAll();
+        toast('✓ Đã sao chép!', 'success');
+      }).catch(() => toast('Không thể copy', 'error'));
+    }
+    
+    // ============ SELECTION ============
+    function toggleSelect(id) {
+      selectedIds.has(id) ? selectedIds.delete(id) : selectedIds.add(id);
+      updateBulkBar();
+    }
+    
+    function updateBulkBar() {
+      const bar = document.getElementById('bulkBar');
+      const num = document.getElementById('selectedNum');
+      
+      if (selectedIds.size > 0) {
+        bar.classList.remove('hidden');
+        num.textContent = selectedIds.size;
+      } else {
+        bar.classList.add('hidden');
+      }
+    }
+    
+    function clearSelection() {
+      selectedIds.clear();
+      document.querySelectorAll('input[type="checkbox"][data-id]').forEach(cb => cb.checked = false);
+      updateBulkBar();
+    }
+    
+    function bulkCopy() {
+      const texts = Array.from(selectedIds)
+        .map(id => prompts.find(p => p.id === id)?.content)
+        .filter(Boolean)
+        .join('\n\n---\n\n');
+      
+      if (texts) {
+        navigator.clipboard.writeText(texts).then(() => {
+          toast(`✓ Copied ${selectedIds.size} prompts`, 'success');
+          clearSelection();
+        });
+      }
+    }
+    
+    function bulkDelete() {
+      if (!confirm(`Xoá ${selectedIds.size} prompt đã chọn?`)) return;
+      
+      prompts = prompts.filter(p => !selectedIds.has(p.id));
+      toast(`✓ Deleted ${selectedIds.size} prompts`, 'success');
+      clearSelection();
+      save();
+      renderAll();
+    }
+    
+    // ============ PREVIEW MODAL ============
+    function preview(id) {
+      const p = prompts.find(x => x.id === id);
+      if (!p) return;
+      
+      previewData = p;
+      
+      document.getElementById('previewTitle').textContent = p.title;
+      
+      // Meta
+      const meta = document.getElementById('previewMeta');
+      meta.innerHTML = `
+        <span class="tag">${escapeHtml(p.category)}</span>
+        ${p.createdAt ? `<span class="text-xs text-gray-500"><i class="fas fa-clock mr-1"></i>${formatDate(p.createdAt)}</span>` : ''}
+      `;
+      
+      // Tags
+      const tagsDiv = document.getElementById('previewTags');
+      tagsDiv.innerHTML = p.tags?.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('') || '';
+      
+      // Content
+      document.getElementById('previewContent').textContent = p.content;
+      
+      // URL
+      const urlDiv = document.getElementById('previewUrl');
+      if (p.url || /^https?:\/\//i.test(p.content)) {
+        const url = p.url || p.content;
+        document.getElementById('previewUrlText').textContent = truncate(url, 60);
+        document.getElementById('previewUrl').href = escapeHtml(url);
+        urlDiv.classList.remove('hidden');
+      } else {
+        urlDiv.classList.add('hidden');
+      }
+      
+      document.getElementById('previewModal').classList.add('active');
+      
+      // Track usage
+      p.usageCount = (p.usageCount || 0) + 1;
+      save();
+      updateStats();
+    }
+    
+    function closeModal() {
+      document.getElementById('previewModal').classList.remove('active');
+      previewData = null;
+    }
+    
+    function handleModalClose(e) {
+      if (e.target.id === 'previewModal') closeModal();
+    }
+    
+    function copyFromPreview() {
+      if (previewData) {
+        navigator.clipboard.writeText(previewData.content).then(() => {
+          toast('✓ Copied!', 'success');
+        });
+      }
+    }
+    
+    // ============ PAGINATION ============
+    function renderPagination(totalPages) {
+      const container = document.getElementById('pagination');
+      container.innerHTML = '';
+      
+      if (totalPages <= 1) return;
+      
+      // Prev
+      if (currentPage > 1) {
+        const btn = document.createElement('button');
+        btn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        btn.className = 'w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition';
+        btn.onclick = () => { currentPage--; renderPrompts(); };
+        container.appendChild(btn);
+      }
+      
+      // Numbers
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+          const btn = document.createElement('button');
+          btn.textContent = i;
+          btn.className = `w-9 h-9 rounded-lg font-medium transition ${
+            i === currentPage 
+              ? 'bg-indigo-500 text-white' 
+              : 'bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700'
+          }`;
+          btn.onclick = () => { currentPage = i; renderPrompts(); };
+          container.appendChild(btn);
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+          const span = document.createElement('span');
+          span.className = 'px-2 text-gray-400';
+          span.textContent = '...';
+          container.appendChild(span);
+        }
+      }
+      
+      // Next
+      if (currentPage < totalPages) {
+        const btn = document.createElement('button');
+        btn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        btn.className = 'w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-700 transition';
+        btn.onclick = () => { currentPage++; renderPrompts(); };
+        container.appendChild(btn);
+      }
+    }
+    
+    // ============ IMPORT/EXPORT ============
+    function exportData() {
+      if (!prompts.length) {
+        toast('Không có dữ liệu để export', 'error');
+        return;
+      }
+      
+      const data = {
+        version: '3.0',
+        exportedAt: new Date().toISOString(),
+        prompts
+      };
+      
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `prompts-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      toast('✓ Exported successfully!', 'success');
+    }
+    
+    function importData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          const imported = Array.isArray(data) ? data : data.prompts;
+          
+          if (!Array.isArray(imported)) throw new Error('Invalid format');
+          
+          const valid = imported
+            .filter(p => p.title && p.content && p.category)
+            .map(p => ({
+              id: p.id || uid(),
+              title: String(p.title),
+              content: String(p.content),
+              category: String(p.category),
+              tags: Array.isArray(p.tags) ? p.tags : [],
+              url: p.url,
+              createdAt: p.createdAt || Date.now(),
+              usageCount: p.usageCount || 0
+            }));
+          
+          // Merge unique
+          const existing = new Set(prompts.map(p => p.id));
+          const newOnes = valid.filter(p => !existing.has(p.id));
+          
+          if (!newOnes.length) {
+            toast('No new prompts to import', 'info');
+            return;
+          }
+          
+          prompts = [...prompts, ...newOnes];
+          save();
+          renderAll();
+          toast(`✓ Imported ${newOnes.length} prompts`, 'success');
+          
+        } catch (err) {
+          toast('Import error: ' + err.message, 'error');
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = '';
+    }
+    
+    // ============ CATEGORY UTILS ============
+    function updateCategoryList() {
+      const datalist = document.getElementById('categoryList');
+      const cats = [...new Set(prompts.map(p => p.category).filter(Boolean))].sort();
+      datalist.innerHTML = cats.map(c => `<option value="${escapeHtml(c)}">`).join('');
+    }
+    
+    function updateCategoryFilter() {
+      const select = document.getElementById('categoryFilter');
+      const cats = [...new Set(prompts.map(p => p.category).filter(Boolean))].sort((a,b) => a.localeCompare(b, 'vi'));
+      const current = select.value;
+      
+      select.innerHTML = '<option value="all">🗂️ Tất cả</option>';
+      cats.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        select.appendChild(opt);
+      });
+      
+      if (cats.includes(current)) select.value = current;
+    }
+    
+    function deleteCategory() {
+      const cat = document.getElementById('deleteCatInput').value.trim();
+      if (!cat) { toast('Nhập tên danh mục', 'error'); return; }
+      
+      const count = prompts.filter(p => p.category === cat).length;
+      if (!count) { toast(`Không tìm thấy "${cat}"`, 'info'); return; }
+      
+      if (confirm(`Xoá ${count} prompt trong "${cat}"?`)) {
+        prompts = prompts.filter(p => p.category !== cat);
+        save();
+        renderAll();
+        toast(`✓ Deleted ${count} prompts`, 'success');
+      }
+    }
+    
+    function clearAll() {
+      if (!prompts.length) { toast('Nothing to clear', 'info'); return; }
+      
+      if (confirm('⚠️ Xoá TẤT CẢ? Không thể hoàn tác!') && prompt('Gõ "XOA" để xác nhận:') === 'XOA') {
+        prompts = [];
+        save();
+        renderAll();
+        toast('✓ Cleared all data', 'success');
+      }
+    }
+    
+    // ============ STATS ============
+    function updateStats() {
+      document.getElementById('statCount').textContent = prompts.length;
+      document.getElementById('statCats').textContent = new Set(prompts.map(p => p.category)).size;
+    }
+    
+    // ============ UTILS ============
+    function escapeHtml(str) {
+      if (!str) return '';
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+    
+    function truncate(str, len) {
+      if (!str) return '';
+      return str.length > len ? str.slice(0, len) + '…' : str;
+    }
+    
+    function formatDate(ts) {
+      const d = new Date(ts);
+      const now = new Date();
+      const diff = now - d;
+      
+      if (diff < 60000) return 'Just now';
+      if (diff < 3600000) return `${Math.floor(diff/60000)}m ago`;
+      if (diff < 86400000) return `${Math.floor(diff/3600000)}h ago`;
+      if (diff < 604800000) return `${Math.floor(diff/86400000)}d ago`;
+      
+      return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+    }
+  </script>
+</body>
+</html>
